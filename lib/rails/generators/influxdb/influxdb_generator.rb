@@ -6,7 +6,7 @@ class InfluxdbGenerator < Rails::Generators::Base
   source_root File.expand_path('../templates', __FILE__)
 
   def copy_initializer_file
-    template "initializer.rb", "config/initializers/influxdb-rails.rb"
+    template 'initializer.rb', 'config/initializers/influxdb-rails.rb'
   end
 
   def install

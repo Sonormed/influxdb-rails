@@ -8,6 +8,7 @@ module InfluxDB
         end
 
         private
+
         def rescue_action_in_public_with_influxdb(e)
           handle_exception(e)
           rescue_action_in_public_without_influxdb(e)
@@ -20,13 +21,10 @@ module InfluxDB
 
         def handle_exception(e)
           request_data = influxdb_request_data || {}
-
-          unless InfluxDB::Rails.configuration.ignore_user_agent?(request_data[:user_agent])
-            InfluxDB::Rails.report_exception_unless_ignorable(e, request_data)
-          end
+          return if  InfluxDB::Rails.configuration.ignore_user_agent?(request_data[:user_agent])
+          InfluxDB::Rails.report_exception_unless_ignorable(e, request_data)
         end
       end
     end
   end
 end
-

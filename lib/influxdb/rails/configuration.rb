@@ -39,26 +39,26 @@ module InfluxDB
       attr_accessor :reraise_global_exceptions
 
       DEFAULTS = {
-        :influxdb_hosts => ["localhost"],
-        :influxdb_port => 8086,
-        :influxdb_username => "root",
-        :influxdb_password => "root",
-        :influxdb_database => nil,
-        :async => true,
-        :use_ssl => false,
+        influxdb_hosts: ['localhost'],
+        influxdb_port: 8086,
+        influxdb_username: 'root',
+        influxdb_password: 'root',
+        influxdb_database: nil,
+        async: true,
+        use_ssl: false,
 
-        :series_name_for_controller_runtimes => "rails.controller",
-        :series_name_for_view_runtimes => "rails.view",
-        :series_name_for_db_runtimes => "rails.db",
-        :series_name_for_total_runtimes => "rails.total",
+        series_name_for_controller_runtimes: 'rails.controller',
+        series_name_for_view_runtimes: 'rails.view',
+        series_name_for_db_runtimes: 'rails.db',
+        series_name_for_total_runtimes: 'rails.total',
 
-        :ignored_exceptions => %w{ActiveRecord::RecordNotFound
-                                  ActionController::RoutingError},
-        :ignored_exception_messages => [],
-        :ignored_reports => [],
-        :ignored_environments => %w{test cucumber selenium},
-        :ignored_user_agents => %w{GoogleBot},
-        :environment_variable_filters => [
+        ignored_exceptions: %w(ActiveRecord::RecordNotFound
+                               ActionController::RoutingError),
+        ignored_exception_messages: [],
+        ignored_reports: [],
+        ignored_environments: %w(test cucumber selenium),
+        ignored_user_agents: %w(GoogleBot),
+        environment_variable_filters: [
           /password/i,
           /key/i,
           /secret/i,
@@ -66,20 +66,20 @@ module InfluxDB
           /rvm_.*_clr/i,
           /color/i
         ],
-        :backtrace_filters => [
-          lambda { |line| line.gsub(/^\.\//, "") },
-          lambda { |line|
+        backtrace_filters: [
+          ->(line) { line.gsub(/^\.\//, '') },
+          lambda do |line|
             return line if InfluxDB::Rails.configuration.application_root.to_s.empty?
-            line.gsub(/#{InfluxDB::Rails.configuration.application_root}/, "[APP_ROOT]")
-          },
-          lambda { |line|
+            line.gsub(/#{InfluxDB::Rails.configuration.application_root}/, '[APP_ROOT]')
+          end,
+          lambda do |line|
             if defined?(Gem) && !Gem.path.nil? && !Gem.path.empty?
-              Gem.path.each { |path| line = line.gsub(/#{path}/, "[GEM_ROOT]") }
+              Gem.path.each { |path| line = line.gsub(/#{path}/, '[GEM_ROOT]') }
             end
             line
-          }
+          end
         ]
-      }
+      }.freeze
 
       def initialize
         @influxdb_hosts = DEFAULTS[:influxdb_hosts]
@@ -121,12 +121,12 @@ module InfluxDB
       end
 
       def ignore_user_agent?(incoming_user_agent)
-        return false if self.ignored_user_agents.nil?
-        self.ignored_user_agents.any? {|agent| incoming_user_agent =~ /#{agent}/}
+        return false if ignored_user_agents.nil?
+        ignored_user_agents.any? { |agent| incoming_user_agent =~ /#{agent}/ }
       end
 
       def ignore_current_environment?
-        self.ignored_environments.include?(self.environment)
+        ignored_environments.include?(environment)
       end
 
       def define_custom_exception_data(&block)
@@ -142,8 +142,9 @@ module InfluxDB
       end
 
       private
+
       def initialize_http_connection
-        Net::HTTP.new(@app_host, "80")
+        Net::HTTP.new(@app_host, '80')
       end
     end
   end

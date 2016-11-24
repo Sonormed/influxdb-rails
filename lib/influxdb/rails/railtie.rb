@@ -4,7 +4,7 @@ require 'rails'
 module InfluxDB
   module Rails
     class Railtie < ::Rails::Railtie
-      initializer "influxdb.insert_rack_middleware" do |app|
+      initializer 'influxdb.insert_rack_middleware' do |app|
         app.config.middleware.insert 0, InfluxDB::Rails::Rack
       end
 
@@ -14,8 +14,8 @@ module InfluxDB
           config.environment           ||= ::Rails.env
           config.application_root      ||= ::Rails.root
           config.application_name      ||= ::Rails.application.class.parent_name
-          config.framework              = "Rails"
-          config.framework_version       = ::Rails.version
+          config.framework = 'Rails'
+          config.framework_version = ::Rails.version
         end
 
         ActiveSupport.on_load(:action_controller) do
@@ -34,8 +34,8 @@ module InfluxDB
         end
 
         if defined?(ActiveSupport::Notifications)
-          ActiveSupport::Notifications.subscribe "process_action.action_controller" do |name, start, finish, id, payload|
-            if InfluxDB::Rails.configuration.instrumentation_enabled  && ! InfluxDB::Rails.configuration.ignore_current_environment?
+          ActiveSupport::Notifications.subscribe 'process_action.action_controller' do |name, start, finish, id, payload|
+            if InfluxDB::Rails.configuration.instrumentation_enabled && !InfluxDB::Rails.configuration.ignore_current_environment?
               begin
                 InfluxDB::Rails.handle_action_controller_metrics(name, start, finish, id, payload)
               rescue => e

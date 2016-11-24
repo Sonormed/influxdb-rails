@@ -25,6 +25,6 @@ rescue LoadError
 
   Spec::Rake::SpecTask.new(:spec) do |t|
     t.pattern = FileList[file_pattern]
-    t.spec_opts += ["--color"]
+    t.spec_opts += ['--color']
   end
 end
