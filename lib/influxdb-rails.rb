@@ -87,7 +87,7 @@ module InfluxDB
             tags: {
               method: method,
               server: hostname,
-            },
+            }
           }
 
           client.write_point configuration.series_name_for_view_runtimes, {
@@ -97,7 +97,7 @@ module InfluxDB
             tags: {
               method: method,
               server: hostname,
-            },
+            }
           }
 
           client.write_point configuration.series_name_for_db_runtimes, {
@@ -107,8 +107,17 @@ module InfluxDB
             tags: {
               method: method,
               server: hostname,
-            },
+            }
           }
+          client.write_point configuration.series_name_for_total_runtimes, {
+            values: {
+                value: controller_runtime + view_runtime + db_runtime,
+            },
+            tags: {
+                method: method,
+                server: hostname,
+            },
+        }
         rescue => e
           log :error, "[InfluxDB::Rails] Unable to write points: #{e.message}"
         end
