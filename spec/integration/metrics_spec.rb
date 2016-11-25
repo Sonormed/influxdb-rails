@@ -15,7 +15,7 @@ describe "collecting metrics through ActiveSupport::Notifications", :type => :re
     end
 
     it "should result in attempts to write metrics via the client" do
-      expect(InfluxDB::Rails.client).to receive(:write_point).exactly(3).times
+      expect(InfluxDB::Rails.client).to receive(:write_point).exactly(4).times
       get "/widgets"
     end
   end
