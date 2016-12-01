@@ -13,6 +13,7 @@ module InfluxDB
       attr_accessor :series_name_for_view_runtimes
       attr_accessor :series_name_for_db_runtimes
       attr_accessor :series_name_for_total_runtimes
+      attr_accessor :series_name_for_sql_runtimes
 
       attr_accessor :application_id
       attr_accessor :application_name
@@ -35,6 +36,8 @@ module InfluxDB
       attr_accessor :environment_variable_filters
 
       attr_accessor :instrumentation_enabled
+      attr_accessor :exceptions_enabled
+      attr_accessor :sql_enabled
       attr_accessor :debug
       attr_accessor :reraise_global_exceptions
 
@@ -51,6 +54,7 @@ module InfluxDB
         series_name_for_view_runtimes: 'rails.view',
         series_name_for_db_runtimes: 'rails.db',
         series_name_for_total_runtimes: 'rails.total',
+        series_name_for_sql_runtimes: 'rails.sql',
 
         ignored_exceptions: %w(ActiveRecord::RecordNotFound
                                ActionController::RoutingError),
@@ -106,6 +110,8 @@ module InfluxDB
         @debug = false
         @rescue_global_exceptions = false
         @instrumentation_enabled = true
+        @exceptions_enabled = true
+        @sql_enabled = true
       end
 
       def debug?
@@ -114,6 +120,14 @@ module InfluxDB
 
       def instrumentation_enabled?
         !!@instrumentation_enabled
+      end
+
+      def exceptions_enabled?
+        !!@exceptions_enabled
+      end
+
+      def sql_enabled?
+        !!@sql_enabled
       end
 
       def reraise_global_exceptions?

@@ -110,6 +110,19 @@ module InfluxDB
         end
       end
 
+      def handle_sql_metrics(_name, start, finish, _id, payload)
+
+        client.write_point configuration.series_name_for_sql_runtimes, values: {
+          value: ((finish - start) * 1000).ceil},
+          tags:{
+            caller: caller.detect{ |path| path.to_s =~ /#{::Rails.root}/ }.to_s,
+            server: Socket.gethostname.to_s,
+            sql: payload[:sql].to_s
+        }
+      rescue => e
+        log :error, "[InfluxDB::Rails] Unable to write points: #{e.message}"
+      end
+
       def current_timestamp
         Time.now.utc.to_i
       end

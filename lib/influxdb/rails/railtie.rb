@@ -25,25 +25,43 @@ module InfluxDB
           include InfluxDB::Rails::Instrumentation
         end
 
-        if defined?(::ActionDispatch::DebugExceptions)
-          require 'influxdb/rails/middleware/hijack_render_exception'
-          ::ActionDispatch::DebugExceptions.send(:include, InfluxDB::Rails::Middleware::HijackRenderException)
-        elsif defined?(::ActionDispatch::ShowExceptions)
-          require 'influxdb/rails/middleware/hijack_render_exception'
-          ::ActionDispatch::ShowExceptions.send(:include, InfluxDB::Rails::Middleware::HijackRenderException)
-        end
+        if  ! InfluxDB::Rails.configuration.ignore_current_environment?
 
-        if defined?(ActiveSupport::Notifications)
-          ActiveSupport::Notifications.subscribe 'process_action.action_controller' do |name, start, finish, id, payload|
-            if InfluxDB::Rails.configuration.instrumentation_enabled && !InfluxDB::Rails.configuration.ignore_current_environment?
-              begin
-                InfluxDB::Rails.handle_action_controller_metrics(name, start, finish, id, payload)
-              rescue => e
-                InfluxDB::Rails.configuration.logger.error "[InfluxDB::Rails] Failed writing points to InfluxDB: #{e.message}"
+          if defined?(::ActionDispatch::DebugExceptions) && InfluxDB::Rails.configuration.exceptions_enabled?
+            require 'influxdb/rails/middleware/hijack_render_exception'
+            ::ActionDispatch::DebugExceptions.send(:include, InfluxDB::Rails::Middleware::HijackRenderException)
+          elsif defined?(::ActionDispatch::ShowExceptions)
+            require 'influxdb/rails/middleware/hijack_render_exception'
+            ::ActionDispatch::ShowExceptions.send(:include, InfluxDB::Rails::Middleware::HijackRenderException)
+          end
+
+          if defined?(ActiveSupport::Notifications)
+
+            if InfluxDB::Rails.configuration.instrumentation_enabled?
+                ActiveSupport::Notifications.subscribe 'process_action.action_controller' do |name, start, finish, id, payload|
+                begin
+                  InfluxDB::Rails.handle_action_controller_metrics(name, start, finish, id, payload)
+                rescue => e
+                  InfluxDB::Rails.configuration.logger.error "[InfluxDB::Rails] Failed writing points to InfluxDB: #{e.message}"
+                end
               end
             end
+
+            if InfluxDB::Rails.configuration.sql_enabled?
+              ActiveSupport::Notifications.subscribe 'sql.active_record' do |name, start, finish, id, payload|
+                begin
+                  InfluxDB::Rails.handle_sql_metrics(name, start, finish, id, payload)
+                rescue => e
+                  InfluxDB::Rails.configuration.logger.error "[InfluxDB::Rails] Failed writing points to InfluxDB: #{e.message}"
+                end
+              end
+            end
+
+
           end
+
         end
+
       end
     end
   end
