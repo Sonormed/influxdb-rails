@@ -114,7 +114,7 @@ module InfluxDB
         @environment_variable_filters = DEFAULTS[:environment_variable_filters]
         @aggregated_exception_classes = []
 
-        @debug                    = false
+        @debug = false
         @rescue_global_exceptions = false
         @instrumentation_enabled  = true
         @instrumentation_enabled = true
@@ -156,7 +156,7 @@ module InfluxDB
       end
 
       def add_custom_exception_data(exception_presenter)
-        @custom_exception_data_handler&.call(exception_presenter)
+        @custom_exception_data_handler&.call(exception_presenter) if @custom_exception_data_handler
       end
 
       def database_name
