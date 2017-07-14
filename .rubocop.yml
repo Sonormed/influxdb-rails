@@ -1,0 +1,18 @@
+Metrics/LineLength:
+  Max: 1140
+
+Style/FrozenStringLiteralComment:
+  Enabled: false
+
+Style/Documentation:
+  Enabled: false
+
+MethodLength:
+  Max: 35
+
+Metrics/AbcSize:
+   Enabled: true
+   Max: 50
+
+BlockLength:
+  Max: 70

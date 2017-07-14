@@ -1,6 +1,6 @@
-require "base64"
-require "socket"
-require "json"
+require 'base64'
+require 'socket'
+require 'json'
 
 module InfluxDB
   module Rails
@@ -40,16 +40,16 @@ module InfluxDB
 
       def context
         c = {
-          :time => Time.now.utc.to_i,
-          :application_name => InfluxDB::Rails.configuration.application_name,
-          :application_root => InfluxDB::Rails.configuration.application_root,
-          :framework => InfluxDB::Rails.configuration.framework,
-          :framework_version => InfluxDB::Rails.configuration.framework_version,
-          :message => @exception.message,
-          :backtrace => JSON.generate(@backtrace.to_a),
-          :language => "Ruby",
-          :language_version => "#{RUBY_VERSION}-p#{RUBY_PATCHLEVEL}",
-          :custom_data => @custom_data
+          time: Time.now.utc.to_i,
+          application_name: InfluxDB::Rails.configuration.application_name,
+          application_root: InfluxDB::Rails.configuration.application_root,
+          framework: InfluxDB::Rails.configuration.framework,
+          framework_version: InfluxDB::Rails.configuration.framework_version,
+          message: @exception.message,
+          backtrace: JSON.generate(@backtrace.to_a),
+          language: 'Ruby',
+          language_version: "#{RUBY_VERSION}-p#{RUBY_PATCHLEVEL}",
+          custom_data: @custom_data
         }
 
         InfluxDB::Rails.configuration.add_custom_exception_data(self)
@@ -58,24 +58,24 @@ module InfluxDB
 
       def dimensions
         d = {
-          :class => @exception.class.to_s,
-          :method => "#{@controller}##{@action}",
-          :filename => File.basename(@backtrace.lines.first.try(:file)),
-          :server => Socket.gethostname,
-          :status => "open"
+          class: @exception.class.to_s,
+          method: "#{@controller}##{@action}",
+          filename: File.basename(@backtrace.lines.first.try(:file)),
+          server: Socket.gethostname,
+          status: 'open'
         }.merge(@dimensions)
       end
 
       def request_data
         {
-          :params => @params,
-          :session_data => @session_data,
-          :controller => @controller,
-          :action => @action,
-          :request_url => @request_url,
-          :referer => @referer,
-          :remote_ip => @remote_ip,
-          :user_agent => @user_agent
+          params: @params,
+          session_data: @session_data,
+          controller: @controller,
+          action: @action,
+          request_url: @request_url,
+          referer: @referer,
+          remote_ip: @remote_ip,
+          user_agent: @user_agent
         }
       end
     end

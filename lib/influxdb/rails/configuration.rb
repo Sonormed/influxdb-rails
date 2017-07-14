@@ -13,9 +13,11 @@ module InfluxDB
       attr_accessor :series_name_for_controller_runtimes
       attr_accessor :series_name_for_view_runtimes
       attr_accessor :series_name_for_db_runtimes
+      attr_accessor :series_name_for_total_runtimes
+      attr_accessor :series_name_for_sql_runtimes
 
       attr_accessor :application_id
-      deprecate :application_id => "This method serve no purpose and will be removed in the release after 0.1.12"
+      deprecate application_id: 'This method serve no purpose and will be removed in the release after 0.1.12'
 
       attr_accessor :application_name
       attr_accessor :application_root
@@ -37,31 +39,35 @@ module InfluxDB
       attr_accessor :environment_variable_filters
 
       attr_accessor :instrumentation_enabled
+      attr_accessor :exceptions_enabled
+      attr_accessor :sql_enabled
       attr_accessor :debug
       attr_accessor :reraise_global_exceptions
 
-
       DEFAULTS = {
-        :influxdb_hosts     => ["localhost"],
-        :influxdb_port      => 8086,
-        :influxdb_username  => "root",
-        :influxdb_password  => "root",
-        :influxdb_database  => nil,
-        :async              => true,
-        :use_ssl            => false,
-        :retry              => nil,
 
-        :series_name_for_controller_runtimes  => "rails.controller",
-        :series_name_for_view_runtimes        => "rails.view",
-        :series_name_for_db_runtimes          => "rails.db",
+        influxdb_hosts: ['localhost'],
+        influxdb_port: 8086,
+        influxdb_username: 'root',
+        influxdb_password: 'root',
+        influxdb_database: nil,
+        async: true,
+        use_ssl: false,
+        retry: nil,
 
-        :ignored_exceptions => %w{ActiveRecord::RecordNotFound
-                                  ActionController::RoutingError},
-        :ignored_exception_messages => [],
-        :ignored_reports => [],
-        :ignored_environments => %w{test cucumber selenium},
-        :ignored_user_agents => %w{GoogleBot},
-        :environment_variable_filters => [
+        series_name_for_controller_runtimes: 'rails.controller',
+        series_name_for_view_runtimes: 'rails.view',
+        series_name_for_db_runtimes: 'rails.db',
+        series_name_for_total_runtimes: 'rails.total',
+        series_name_for_sql_runtimes: 'rails.sql',
+
+        ignored_exceptions: %w[ActiveRecord::RecordNotFound
+                               ActionController::RoutingError],
+        ignored_exception_messages: [],
+        ignored_reports: [],
+        ignored_environments: %w[test cucumber selenium],
+        ignored_user_agents: %w[GoogleBot],
+        environment_variable_filters: [
           /password/i,
           /key/i,
           /secret/i,
@@ -69,47 +75,51 @@ module InfluxDB
           /rvm_.*_clr/i,
           /color/i
         ],
-        :backtrace_filters => [
-          lambda { |line| line.gsub(/^\.\//, "") },
-          lambda { |line|
+        backtrace_filters: [
+          ->(line) { line.gsub(/^\.\//, '') },
+          lambda do |line|
             return line if InfluxDB::Rails.configuration.application_root.to_s.empty?
-            line.gsub(/#{InfluxDB::Rails.configuration.application_root}/, "[APP_ROOT]")
-          },
-          lambda { |line|
+            line.gsub(/#{InfluxDB::Rails.configuration.application_root}/, '[APP_ROOT]')
+          end,
+          lambda do |line|
             if defined?(Gem) && !Gem.path.nil? && !Gem.path.empty?
-              Gem.path.each { |path| line = line.gsub(/#{path}/, "[GEM_ROOT]") }
+              Gem.path.each { |path| line = line.gsub(/#{path}/, '[GEM_ROOT]') }
             end
             line
-          }
+          end
         ]
-      }
+      }.freeze
 
       def initialize
-        @influxdb_hosts     = DEFAULTS[:influxdb_hosts]
-        @influxdb_port      = DEFAULTS[:influxdb_port]
-        @influxdb_username  = DEFAULTS[:influxdb_username]
-        @influxdb_password  = DEFAULTS[:influxdb_password]
-        @influxdb_database  = DEFAULTS[:influxdb_database]
-        @async              = DEFAULTS[:async]
-        @use_ssl            = DEFAULTS[:use_ssl]
-        @retry              = DEFAULTS[:retry]
+        @influxdb_hosts = DEFAULTS[:influxdb_hosts]
+        @influxdb_port = DEFAULTS[:influxdb_port]
+        @influxdb_username = DEFAULTS[:influxdb_username]
+        @influxdb_password = DEFAULTS[:influxdb_password]
+        @influxdb_database = DEFAULTS[:influxdb_database]
+        @async = DEFAULTS[:async]
+        @use_ssl = DEFAULTS[:use_ssl]
+        @retry = DEFAULTS[:retry]
 
-        @series_name_for_controller_runtimes  = DEFAULTS[:series_name_for_controller_runtimes]
-        @series_name_for_view_runtimes        = DEFAULTS[:series_name_for_view_runtimes]
-        @series_name_for_db_runtimes          = DEFAULTS[:series_name_for_db_runtimes]
+        @series_name_for_controller_runtimes = DEFAULTS[:series_name_for_controller_runtimes]
+        @series_name_for_view_runtimes = DEFAULTS[:series_name_for_view_runtimes]
+        @series_name_for_db_runtimes = DEFAULTS[:series_name_for_db_runtimes]
+        @series_name_for_total_runtimes = DEFAULTS[:series_name_for_total_runtimes]
 
-        @ignored_exceptions           = DEFAULTS[:ignored_exceptions].dup
-        @ignored_exception_messages   = DEFAULTS[:ignored_exception_messages].dup
-        @ignored_reports              = DEFAULTS[:ignored_reports].dup
-        @ignored_environments         = DEFAULTS[:ignored_environments].dup
-        @ignored_user_agents          = DEFAULTS[:ignored_user_agents].dup
-        @backtrace_filters            = DEFAULTS[:backtrace_filters].dup
+        @ignored_exceptions = DEFAULTS[:ignored_exceptions].dup
+        @ignored_exception_messages = DEFAULTS[:ignored_exception_messages].dup
+        @ignored_reports = DEFAULTS[:ignored_reports].dup
+        @ignored_environments = DEFAULTS[:ignored_environments].dup
+        @ignored_user_agents = DEFAULTS[:ignored_user_agents].dup
+        @backtrace_filters = DEFAULTS[:backtrace_filters].dup
         @environment_variable_filters = DEFAULTS[:environment_variable_filters]
         @aggregated_exception_classes = []
 
         @debug                    = false
         @rescue_global_exceptions = false
         @instrumentation_enabled  = true
+        @instrumentation_enabled = true
+        @exceptions_enabled = true
+        @sql_enabled = true
       end
 
       def debug?
@@ -120,17 +130,25 @@ module InfluxDB
         !!@instrumentation_enabled
       end
 
+      def exceptions_enabled?
+        !!@exceptions_enabled
+      end
+
+      def sql_enabled?
+        !!@sql_enabled
+      end
+
       def reraise_global_exceptions?
         !!@reraise_global_exceptions
       end
 
       def ignore_user_agent?(incoming_user_agent)
-        return false if self.ignored_user_agents.nil?
-        self.ignored_user_agents.any? {|agent| incoming_user_agent =~ /#{agent}/}
+        return false if ignored_user_agents.nil?
+        ignored_user_agents.any? { |agent| incoming_user_agent =~ /#{agent}/ }
       end
 
       def ignore_current_environment?
-        self.ignored_environments.include?(self.environment)
+        ignored_environments.include?(environment)
       end
 
       def define_custom_exception_data(&block)
@@ -138,17 +156,18 @@ module InfluxDB
       end
 
       def add_custom_exception_data(exception_presenter)
-        @custom_exception_data_handler.call(exception_presenter) if @custom_exception_data_handler
+        @custom_exception_data_handler&.call(exception_presenter)
       end
 
       def database_name
         @application_id.to_s + @environment.to_s
       end
-      deprecate :database_name => "This method will be removed in the release after 0.1.12, you ought to use #influxdb_database"
+      deprecate database_name: 'This method will be removed in the release after 0.1.12, you ought to use #influxdb_database'
 
       private
+
       def initialize_http_connection
-        Net::HTTP.new(@app_host, "80")
+        Net::HTTP.new(@app_host, '80')
       end
     end
   end
