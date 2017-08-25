@@ -119,7 +119,7 @@ module InfluxDB
                                                                        tags: {
                                                                          caller: caller.detect { |path| path.to_s =~ /#{::Rails.root}/ }.to_s,
                                                                          server: Socket.gethostname.to_s,
-                                                                         sql: payload[:sql].to_s
+                                                                         sql: "'#{payload[:sql].to_s.gsub(/'/, "\\\\'")}'"
                                                                        }
       rescue => e
         log :error, "[InfluxDB::Rails] Unable to write points: #{e.message}"
