@@ -117,7 +117,7 @@ module InfluxDB
           value: ((finish - start) * 1000).ceil
         },
                                                                        tags: {
-                                                                         caller: caller.detect { |path| path.to_s =~ /#{::Rails.root}/ }.to_s,
+                                                                         caller: "'#{caller.detect { |path| path.to_s =~ /#{::Rails.root}/ }.to_s.to_s.gsub(/'/, "\\\\'")}'",
                                                                          server: Socket.gethostname.to_s,
                                                                          sql: "'#{payload[:sql].to_s.gsub(/'/, "\\\\'")}'"
                                                                        }
